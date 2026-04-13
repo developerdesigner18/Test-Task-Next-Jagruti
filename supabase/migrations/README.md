@@ -1,0 +1,20 @@
+-- ============================================================
+-- How to apply all migrations (in order):
+--
+-- Option A: Supabase CLI
+--   supabase db reset          (wipes DB + reruns all migrations)
+--   supabase db push           (applies new migrations only)
+--
+-- Option B: SQL Editor (Supabase dashboard)
+--   Run files in this order:
+--     001_customer_schema.sql
+--     002_seed.sql
+--     003_rls_policies.sql
+--
+-- Before running 002_seed.sql, create two auth users:
+--   Dashboard → Authentication → Add User:
+--     test@tcl-demo.com   / TCLdemo2024!
+--     other@tcl-demo.com  / TCLdemo2024!
+--   Then paste each user's auth UUID into the DO $$ block
+--   at the top of 002_seed.sql (customer_a_id / customer_b_id).
+-- ============================================================
