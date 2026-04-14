@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useEffect } from "react";
+import { useActionState, useEffect, Suspense } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { toast } from "react-toastify";
@@ -11,7 +11,7 @@ import type { AuthResult } from "@/lib/auth/actions";
 
 const initialState: AuthResult = { error: null };
 
-export default function LoginPage() {
+function LoginContent() {
   const [state, formAction, isPending] = useActionState(logIn, initialState);
   const searchParams = useSearchParams();
 
@@ -117,5 +117,21 @@ export default function LoginPage() {
         </p>
       </div>
     </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={<div className="animate-pulse space-y-8">
+      <div className="h-8 w-3/4 bg-slate-100 rounded-lg" />
+      <div className="h-4 w-1/2 bg-slate-100 rounded-lg" />
+      <div className="space-y-6">
+        <div className="h-14 bg-slate-100 rounded-2xl" />
+        <div className="h-14 bg-slate-100 rounded-2xl" />
+        <div className="h-16 bg-slate-100 rounded-[24px]" />
+      </div>
+    </div>}>
+      <LoginContent />
+    </Suspense>
   );
 }
