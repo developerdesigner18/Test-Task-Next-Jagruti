@@ -11,11 +11,14 @@ export default function AIRecommendation({ order }: { order: any }) {
     const controller = new AbortController()
 
     async function fetchAI() {
-      if (!order || !order.id) return
+      if (!order || !order.id || !order.status) return
       if (advice && !loading) return 
 
       try {
         setLoading(true)
+        // Give the page a moment to fully settle on first load
+        await new Promise(r => setTimeout(r, 600))
+        
         const res = await fetch('/api/ai/next-action', {
           method: 'POST',
           body: JSON.stringify({ order }),

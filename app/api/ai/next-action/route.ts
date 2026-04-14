@@ -60,6 +60,7 @@ export async function POST(req: Request) {
           Authorization: `Bearer ${apiKey}`,
           "Content-Type": "application/json",
         },
+        cache: "no-store",
         body: JSON.stringify({
           model: "meta/llama-3.1-70b-instruct",
           messages: [
