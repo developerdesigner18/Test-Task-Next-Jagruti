@@ -29,16 +29,27 @@ interface NVIDIAResponse {
 
 export async function POST(req: Request) {
   try {
-    const body = (await req.json()) as OrderPayload;
+    const text = await req.text();
+    if (!text) {
+      return NextResponse.json(
+        { advice: "Check your order details for the next steps." },
+        { status: 400 }
+      );
+    }
+    
+    const body = JSON.parse(text) as OrderPayload;
     const order = body.order;
     const apiKey = process.env.NVIDIA_API_KEY || process.env.OPENAI_API_KEY;
 
-    if (!apiKey) {
-      throw new Error("Missing AI API Key");
+    if (!apiKey || apiKey === "undefined") {
+      console.warn("AI Assistant: Missing API Key");
+      return NextResponse.json({
+        advice: "Consult with your project manager for updates."
+      });
     }
 
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 8000);
+    const timeoutId = setTimeout(() => controller.abort(), 15000);
 
     const response = await fetch(
       "https://integrate.api.nvidia.com/v1/chat/completions",
@@ -50,7 +61,7 @@ export async function POST(req: Request) {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          model: "meta/llama-3.1-405b-instruct",
+          model: "meta/llama-3.1-70b-instruct",
           messages: [
             {
               role: "system",
@@ -99,8 +110,8 @@ Use event name or print type if helpful, but keep it short.`,
               content: `Project: ${order.event_name}. Status: ${order.status}. Deadline: ${order.due_date}. Print: ${order.selected_print_type}. Provide next step.`,
             },
           ],
-          max_tokens: 250,
-          temperature: 0.6,
+          max_tokens: 150,
+          temperature: 0.5,
           stream: false,
           chat_template_kwargs: { enable_thinking: false },
         }),
@@ -110,7 +121,12 @@ Use event name or print type if helpful, but keep it short.`,
     clearTimeout(timeoutId);
 
     if (!response.ok) {
-      throw new Error(`API returned ${response.status}`);
+      const errorText = await response.text();
+      console.error("NVIDIA AI Error:", {
+        status: response.status,
+        body: errorText,
+      });
+      throw new Error(`API returned ${response.status}: ${errorText}`);
     }
 
     const data = (await response.json()) as NVIDIAResponse;
@@ -129,12 +145,9 @@ Use event name or print type if helpful, but keep it short.`,
 
     return NextResponse.json({ advice: advice.trim().replace(/^"|"$/g, "") });
   } catch (err: unknown) {
-    const message =
-      err instanceof Error
-        ? err.name === "AbortError"
-          ? "TIMEOUT"
-          : err.message
-        : "Unknown error";
+    const isTimeout = err instanceof Error && err.name === "AbortError";
+    console.error("AI Assistant Error:", isTimeout ? "TIMEOUT" : err);
+    
     return NextResponse.json({
       advice: "Check your order details for the next steps.",
     });

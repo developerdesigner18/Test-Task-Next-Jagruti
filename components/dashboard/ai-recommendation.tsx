@@ -11,7 +11,7 @@ export default function AIRecommendation({ order }: { order: any }) {
     const controller = new AbortController()
 
     async function fetchAI() {
-      // Small debounce/guard: If we already have advice and it's not loading, skip
+      if (!order || !order.id) return
       if (advice && !loading) return 
 
       try {
@@ -22,10 +22,14 @@ export default function AIRecommendation({ order }: { order: any }) {
           headers: { 'Content-Type': 'application/json' },
           signal: controller.signal
         })
+        
+        if (!res.ok) throw new Error(`API error: ${res.status}`)
+        
         const data = await res.json()
         if (isMounted) setAdvice(data.advice)
       } catch (err: unknown) {
         if (err instanceof Error && err.name !== 'AbortError' && isMounted) {
+          console.error('AI Recommendation Error:', err)
           setAdvice("Check your project details for next steps.")
         }
       } finally {
